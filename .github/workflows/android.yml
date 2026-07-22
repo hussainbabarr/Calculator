@@ -45,7 +45,7 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
 
-          # Legacy SDK Tools (tools/bin/sdkmanager layout ke sath)
+          # Legacy SDK Tools download karein jo tools/bin/sdkmanager ka structure banaye
           wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O sdk.zip
           mkdir -p android-sdk
           unzip -q sdk.zip -d android-sdk
