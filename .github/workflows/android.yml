@@ -45,32 +45,18 @@ jobs:
           pip install buildozer cython==0.29.37
 
 
-      - name: Install Android SDK (modern cmdline-tools)
+      - name: Pre-accept Android SDK licenses for buildozer
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
-          unzip -q sdk.zip
-          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
-          echo "ANDROIDAPI=34" >> $GITHUB_ENV
-          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-
-      - name: Install SDK packages
-        run: |
-          yes | sdkmanager --licenses || true
-
-          sdkmanager \
-          "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;34.0.0" \
-          "ndk;25.2.9519653"
+          # Buildozer downloads and manages its OWN Android SDK inside
+          # ~/.buildozer/android/platform/android-sdk the first time it runs.
+          # If the license files aren't there yet, sdkmanager silently skips
+          # installing build-tools (which is why "aidl" ends up missing).
+          # Pre-creating the accepted license files fixes that.
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
+          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" \
+            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" \
+            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
 
 
       - name: Build APK
