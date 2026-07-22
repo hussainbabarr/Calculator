@@ -45,33 +45,30 @@ jobs:
           pip install buildozer cython==0.29.37
 
 
-      - name: Install Android SDK (modern cmdline-tools)
+      - name: Pre-stage buildozer's Android SDK with accepted licenses
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
-          unzip -q sdk.zip
-          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          # Buildozer downloads its OWN old-style Android cmdline-tools into
+          # ~/.buildozer/android/platform/android-sdk on first run, then calls
+          # sdkmanager to install build-tools/platforms/ndk. In CI there's no
+          # terminal to answer the license prompt, so that step gets skipped
+          # and "aidl" (inside build-tools) ends up missing.
+          #
+          # Fix: stage that exact SDK folder ourselves, with the licenses
+          # already accepted, so buildozer finds it ready to go.
+          mkdir -p $HOME/.buildozer/android/platform
+          cd $HOME/.buildozer/android/platform
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-6514223_latest.zip -O sdk.zip
+          mkdir -p android-sdk
+          unzip -q sdk.zip -d android-sdk
+          rm sdk.zip
 
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          mkdir -p android-sdk/licenses
+          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" > android-sdk/licenses/android-sdk-license
+          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" > android-sdk/licenses/android-sdk-preview-license
 
-
-      - name: Install SDK packages
-        run: |
-          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses || true
-
-          sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;34.0.0" \
-          "ndk;25.2.9519653"
-
-
-      - name: Point buildozer.spec at our SDK/NDK
-        run: |
-          python3 -c "import configparser; cp = configparser.ConfigParser(); cp.optionxform = str; cp.read('buildozer.spec'); cp['app']['android.sdk_path'] = '/home/runner/android-sdk'; cp['app']['android.ndk_path'] = '/home/runner/android-sdk/ndk/25.2.9519653'; f = open('buildozer.spec', 'w'); cp.write(f); f.close(); print('android.sdk_path =', cp['app']['android.sdk_path']); print('android.ndk_path =', cp['app']['android.ndk_path'])"
+          echo "----- Staged SDK contents -----"
+          ls -la android-sdk
+          ls -la android-sdk/tools/bin || true
 
 
       - name: Build APK
