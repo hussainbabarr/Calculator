@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,10 +29,21 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y \
-            git zip unzip wget curl \
-            autoconf automake libtool pkg-config \
-            cmake libffi-dev libssl-dev \
-            zlib1g-dev libncurses5-dev libncursesw5-dev
+            git \
+            zip \
+            unzip \
+            wget \
+            curl \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev
 
       - name: Install Buildozer
         run: |
@@ -42,11 +53,11 @@ jobs:
       - name: Download Android SDK Command Line Tools
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
           unzip -q sdk.zip
           mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
-      - name: Set Android Environment
+      - name: Configure Android SDK
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
@@ -63,8 +74,8 @@ jobs:
             "ndk;25.2.9519653"
 
       - name: Build APK
-  run: |
-    buildozer -v android debug
+        run: |
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
