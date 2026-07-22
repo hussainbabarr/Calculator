@@ -45,18 +45,20 @@ jobs:
           pip install buildozer cython==0.29.37
 
 
-      - name: Pre-accept Android SDK licenses for buildozer
+      - name: Prime buildozer (let it download its own SDK/NDK)
         run: |
-          # Buildozer downloads and manages its OWN Android SDK inside
-          # ~/.buildozer/android/platform/android-sdk the first time it runs.
-          # If the license files aren't there yet, sdkmanager silently skips
-          # installing build-tools (which is why "aidl" ends up missing).
-          # Pre-creating the accepted license files fixes that.
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" \
-            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" \
-            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          # This first run is EXPECTED to fail — it just makes buildozer
+          # download Java tools, the Android SDK cmdline-tools, and the NDK
+          # into ~/.buildozer/android/platform/. It will stop once it hits
+          # the license prompt, which is fine.
+          buildozer android debug || true
+
+
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER=$(find $HOME/.buildozer/android/platform/android-sdk -type f -name sdkmanager | head -n 1)
+          echo "Using sdkmanager at: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses || true
 
 
       - name: Build APK
