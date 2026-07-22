@@ -71,14 +71,7 @@ jobs:
 
       - name: Point buildozer.spec at our SDK/NDK
         run: |
-          # Tell buildozer to use the SDK/NDK we just installed instead of
-          # downloading its own (older, license-troubled) copy.
-          sed -i "s|^# android.sdk_path =.*|android.sdk_path = $HOME/android-sdk|" buildozer.spec
-          sed -i "s|^# android.ndk_path =.*|android.ndk_path = $HOME/android-sdk/ndk/25.2.9519653|" buildozer.spec
-          grep -q "^android.sdk_path" buildozer.spec || echo "android.sdk_path = $HOME/android-sdk" >> buildozer.spec
-          grep -q "^android.ndk_path" buildozer.spec || echo "android.ndk_path = $HOME/android-sdk/ndk/25.2.9519653" >> buildozer.spec
-          echo "----- buildozer.spec relevant lines -----"
-          grep -E "sdk_path|ndk_path" buildozer.spec
+          python3 -c "import configparser; cp = configparser.ConfigParser(); cp.optionxform = str; cp.read('buildozer.spec'); cp['app']['android.sdk_path'] = '/home/runner/android-sdk'; cp['app']['android.ndk_path'] = '/home/runner/android-sdk/ndk/25.2.9519653'; f = open('buildozer.spec', 'w'); cp.write(f); f.close(); print('android.sdk_path =', cp['app']['android.sdk_path']); print('android.ndk_path =', cp['app']['android.ndk_path'])"
 
 
       - name: Build APK
