@@ -15,19 +15,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
 
       - name: Install dependencies
         run: |
@@ -38,43 +35,34 @@ jobs:
             cmake libffi-dev libssl-dev \
             zlib1g-dev libncurses5-dev libncursesw5-dev
 
-
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
           pip install buildozer cython==0.29.37
 
-
       - name: Pre-stage buildozer's Android SDK with accepted licenses
         run: |
-          # Buildozer downloads its OWN old-style Android cmdline-tools into
-          # ~/.buildozer/android/platform/android-sdk on first run, then calls
-          # sdkmanager to install build-tools/platforms/ndk. In CI there's no
-          # terminal to answer the license prompt, so that step gets skipped
-          # and "aidl" (inside build-tools) ends up missing.
-          #
-          # Fix: stage that exact SDK folder ourselves, with the licenses
-          # already accepted, so buildozer finds it ready to go.
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-6514223_latest.zip -O sdk.zip
+
+          # Legacy SDK Tools (tools/bin/sdkmanager layout ke sath)
+          wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O sdk.zip
           mkdir -p android-sdk
           unzip -q sdk.zip -d android-sdk
           rm sdk.zip
 
+          # Licenses pehle se accept karein
           mkdir -p android-sdk/licenses
           printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" > android-sdk/licenses/android-sdk-license
           printf "84831b9409646a918e30573bab4c9c91346d8abd\n" > android-sdk/licenses/android-sdk-preview-license
 
           echo "----- Staged SDK contents -----"
           ls -la android-sdk
-          ls -la android-sdk/tools/bin || true
-
+          ls -la android-sdk/tools/bin
 
       - name: Build APK
         run: |
           buildozer android debug
-
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
