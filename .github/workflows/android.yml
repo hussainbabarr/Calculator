@@ -63,8 +63,8 @@ jobs:
             "ndk;25.2.9519653"
 
       - name: Build APK
-        run: |
-          buildozer android debug
+  run: |
+    buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
