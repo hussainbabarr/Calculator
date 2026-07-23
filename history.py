@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator
 
+from app_paths import app_data_dir
+
 
 @dataclass
 class HistoryEntry:
@@ -27,9 +29,11 @@ class HistoryManager:
     """Unlimited in-memory history with disk backup."""
 
     def __init__(self, path: Path | None = None) -> None:
-        base = Path.home() / ".precision_calculator"
-        base.mkdir(parents=True, exist_ok=True)
-        self.path = path or (base / "history.json")
+        self.path = Path(path) if path is not None else app_data_dir() / "history.json"
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
         self.entries: list[HistoryEntry] = []
         self.load()
 
@@ -58,16 +62,19 @@ class HistoryManager:
         self.save()
 
     def load(self) -> None:
-        if not self.path.exists():
-            return
         try:
+            if not self.path.is_file():
+                return
             data = json.loads(self.path.read_text(encoding="utf-8"))
+            if not isinstance(data, list):
+                raise TypeError("History data must be a list.")
             self.entries = [HistoryEntry(**item) for item in data]
         except (json.JSONDecodeError, OSError, TypeError):
             self.entries = []
 
     def save(self) -> None:
         try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
             payload = [asdict(e) for e in self.entries]
             self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         except OSError:

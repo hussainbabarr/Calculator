@@ -14,6 +14,7 @@ from typing import Callable
 
 import requests
 
+from app_paths import app_data_dir
 from calculator import CalculatorError
 
 
@@ -149,23 +150,23 @@ class CurrencyConverter:
     """
 
     API_URL = "https://api.frankfurter.app/latest"
-    CACHE_FILE = Path.home() / ".precision_calculator" / "exchange_rates.json"
+    CACHE_FILE = app_data_dir() / "exchange_rates.json"
 
-    def __init__(self) -> None:
+    def __init__(self, cache_file: Path | None = None) -> None:
+        self.cache_file = Path(cache_file) if cache_file is not None else self.CACHE_FILE
         self.base = "EUR"
         self.rates: dict[str, float] = {"EUR": 1.0}
         self.updated_at: str | None = None
         self._load_cache()
 
     def _load_cache(self) -> None:
-        if not self.CACHE_FILE.exists():
-            self._seed_fallback()
-            return
         try:
-            data = json.loads(self.CACHE_FILE.read_text(encoding="utf-8"))
-            self.rates = data.get("rates", self.rates)
+            data = json.loads(self.cache_file.read_text(encoding="utf-8"))
+            if not isinstance(data, dict) or not isinstance(data.get("rates"), dict):
+                raise ValueError("Invalid exchange-rate cache.")
+            self.rates = data["rates"]
             self.updated_at = data.get("updated_at")
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
             self._seed_fallback()
 
     def _seed_fallback(self) -> None:
@@ -192,13 +193,13 @@ class CurrencyConverter:
         self.updated_at = "offline (approximate)"
 
     def _save_cache(self) -> None:
-        self.CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "updated_at": self.updated_at,
             "rates": self.rates,
         }
         try:
-            self.CACHE_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            self.cache_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         except OSError:
             pass
 

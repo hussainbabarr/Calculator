@@ -10,6 +10,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from app_paths import app_data_dir
 from calculator import AngleMode, NumberBase
 
 
@@ -31,24 +32,29 @@ class SettingsStore:
     """Load/save settings JSON in the user config directory."""
 
     def __init__(self, path: Path | None = None) -> None:
-        base = Path.home() / ".precision_calculator"
-        base.mkdir(parents=True, exist_ok=True)
-        self.path = path or (base / "settings.json")
+        self.path = Path(path) if path is not None else app_data_dir() / "settings.json"
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
         self.data = AppSettings()
 
     def load(self) -> AppSettings:
-        if self.path.exists():
-            try:
+        try:
+            if self.path.is_file():
                 raw = json.loads(self.path.read_text(encoding="utf-8"))
+                if not isinstance(raw, dict):
+                    return self.data
                 for key, value in raw.items():
                     if hasattr(self.data, key):
                         setattr(self.data, key, value)
-            except (json.JSONDecodeError, OSError, TypeError):
-                pass
+        except (json.JSONDecodeError, OSError, TypeError):
+            pass
         return self.data
 
     def save(self) -> None:
         try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.write_text(
                 json.dumps(asdict(self.data), indent=2),
                 encoding="utf-8",
