@@ -29,6 +29,8 @@ warn_on_root = 1
 android.permissions = INTERNET
 # (str) Android API target
 android.api = 34
+android.sdk = 34
+android.ndk = 25b
 # (str) Android minimum API
 android.minapi = 23
 # (str) Android architecture
