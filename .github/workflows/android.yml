@@ -116,4 +116,3 @@ jobs:
         with:
           name: calculator-debug-apk
           path: bin/*.apk
-          if-no-files-found: error
