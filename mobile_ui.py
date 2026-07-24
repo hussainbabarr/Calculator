@@ -245,34 +245,35 @@ class MobileCalculator(BoxLayout):
             "Statistics": self.show_stats,
             "Currency Converter": self.show_currency,
             "History": self.show_history,
-            "Themes": self.show_themes,
             "Settings": self.show_settings,
             "Precision Pro": self.show_pro,
         }
 
         self._build_shell()
         self.show_calculator()
+        Window.bind(on_keyboard=self._handle_android_back)
 
     def _build_shell(self) -> None:
         self.expression = self._text_input(
             hint="Enter an expression",
-            font_size=sp(18),
-            height=dp(36),
+            font_size=sp(16),
+            height=dp(30),
             halign="right",
         )
+        self.expression.padding = (dp(10), dp(5))
         self.result = self._label(
             "0",
-            font_size=sp(31),
+            font_size=sp(27),
             color=COLORS["text"],
             halign="right",
-            height=dp(42),
+            height=dp(34),
         )
         self.status = self._label(
             "Ready",
             font_size=sp(11),
             color=COLORS["muted"],
             halign="right",
-            height=dp(18),
+            height=dp(16),
         )
 
         self.add_widget(self._build_header())
@@ -464,6 +465,19 @@ class MobileCalculator(BoxLayout):
         self.credit_button.bind(on_release=self.show_pro)
         header.add_widget(self.credit_button)
 
+        theme_button = ProfessionalButton(
+            text="THEME",
+            size_hint=(None, None),
+            size=(dp(50), dp(32)),
+            font_size=sp(8),
+            radius=16,
+            normal_color=COLORS["surface"],
+            pressed_color=COLORS["surface_pressed"],
+            color=COLORS["cyan"],
+        )
+        theme_button.bind(on_release=self.show_themes)
+        header.add_widget(theme_button)
+
         menu_button = ProfessionalButton(
             text="...",
             size_hint=(None, None),
@@ -515,6 +529,19 @@ class MobileCalculator(BoxLayout):
             self.header_title.text = page_name
         if self.menu is not None:
             self.menu.dismiss()
+
+    def _handle_android_back(self, _window, key, *_args) -> bool:
+        """Return to Calculator before Android is allowed to close the app."""
+
+        if key not in (27, 1001):
+            return False
+        if self.menu is not None:
+            self.menu.dismiss()
+            return True
+        if self.current_page != "Calculator":
+            self.show_calculator()
+            return True
+        return False
 
     def _update_credit_badge(self) -> None:
         if not hasattr(self, "credit_button"):
@@ -595,8 +622,8 @@ class MobileCalculator(BoxLayout):
         display = Surface(
             orientation="vertical",
             size_hint_y=None,
-            height=dp(138),
-            padding=(dp(12), dp(8)),
+            height=dp(114),
+            padding=(dp(12), dp(6)),
             spacing=dp(1),
             radius=16,
         )
@@ -1245,7 +1272,7 @@ class MobileCalculator(BoxLayout):
             spacing=dp(4),
             padding=dp(14),
             size_hint_y=None,
-            height=dp(145),
+            height=dp(210),
         )
         about.add_widget(
             self._label(
@@ -1275,10 +1302,19 @@ class MobileCalculator(BoxLayout):
         )
         about.add_widget(
             self._label(
-                "Designed by Hussain Babar",
+                "DEVELOPER",
+                font_size=sp(10),
+                color=COLORS["muted"],
+                height=dp(20),
+                bold=True,
+            )
+        )
+        about.add_widget(
+            self._label(
+                "Developed and designed by\nMuhammad Hussain Babar",
                 font_size=sp(12),
                 color=COLORS["cyan"],
-                height=dp(25),
+                height=dp(42),
                 bold=True,
             )
         )
