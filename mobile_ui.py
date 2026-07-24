@@ -398,22 +398,19 @@ class MobileCalculator(BoxLayout):
         group.add_widget(widget)
         return group
 
-    def _page_title(self, title: str, subtitle: str) -> BoxLayout:
+    def _page_title(self, _title: str, subtitle: str) -> BoxLayout:
+        """Show only supporting text; the page name already lives in the header."""
         block = BoxLayout(
             orientation="vertical",
             size_hint_y=None,
-            height=dp(55),
-            spacing=dp(1),
-        )
-        block.add_widget(
-            self._label(title, font_size=sp(21), bold=True, height=dp(31))
+            height=dp(28),
         )
         block.add_widget(
             self._label(
                 subtitle,
                 font_size=sp(11),
                 color=COLORS["muted"],
-                height=dp(22),
+                height=dp(28),
             )
         )
         return block
