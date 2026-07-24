@@ -26,6 +26,8 @@ class AppSettings:
     last_currency_to: str = "EUR"
     window_geometry: str = "1280x860"
     recent_currencies: list[str] = field(default_factory=lambda: ["USD", "EUR", "GBP", "PKR"])
+    credits_remaining: int = 100
+    is_pro: bool = False
 
 
 class SettingsStore:
@@ -48,6 +50,15 @@ class SettingsStore:
                 for key, value in raw.items():
                     if hasattr(self.data, key):
                         setattr(self.data, key, value)
+                try:
+                    self.data.credits_remaining = max(
+                        0,
+                        int(self.data.credits_remaining),
+                    )
+                except (TypeError, ValueError):
+                    self.data.credits_remaining = 100
+                if not isinstance(self.data.is_pro, bool):
+                    self.data.is_pro = False
         except (json.JSONDecodeError, OSError, TypeError):
             pass
         return self.data

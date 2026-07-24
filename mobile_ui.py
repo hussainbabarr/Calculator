@@ -1,6 +1,6 @@
 """Professional Kivy interface for the Android calculator build.
 
-Designed by Hussain
+Designed by Hussain Babar
 """
 
 from __future__ import annotations
@@ -12,8 +12,10 @@ from kivy.metrics import dp, sp
 from kivy.properties import ListProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.dropdown import DropDown
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.spinner import Spinner
 from kivy.uix.textinput import TextInput
@@ -30,21 +32,77 @@ from history import HistoryManager
 from settings import SettingsStore
 
 
-COLORS = {
-    "background": (0.020, 0.035, 0.067, 1),
-    "surface": (0.043, 0.071, 0.125, 1),
-    "surface_alt": (0.065, 0.102, 0.169, 1),
-    "surface_pressed": (0.090, 0.140, 0.225, 1),
-    "accent": (0.102, 0.443, 0.831, 1),
-    "accent_pressed": (0.075, 0.345, 0.680, 1),
-    "cyan": (0.145, 0.800, 0.925, 1),
-    "danger": (0.890, 0.255, 0.310, 1),
-    "danger_pressed": (0.720, 0.170, 0.225, 1),
-    "success": (0.180, 0.820, 0.600, 1),
-    "text": (0.945, 0.969, 1, 1),
-    "muted": (0.570, 0.660, 0.760, 1),
-    "line": (0.110, 0.175, 0.275, 1),
+THEMES = {
+    "Dark": {
+        "background": (0.020, 0.035, 0.067, 1),
+        "surface": (0.043, 0.071, 0.125, 1),
+        "surface_alt": (0.065, 0.102, 0.169, 1),
+        "surface_pressed": (0.090, 0.140, 0.225, 1),
+        "accent": (0.102, 0.443, 0.831, 1),
+        "accent_pressed": (0.075, 0.345, 0.680, 1),
+        "cyan": (0.145, 0.800, 0.925, 1),
+        "danger": (0.890, 0.255, 0.310, 1),
+        "danger_pressed": (0.720, 0.170, 0.225, 1),
+        "success": (0.180, 0.820, 0.600, 1),
+        "text": (0.945, 0.969, 1, 1),
+        "muted": (0.570, 0.660, 0.760, 1),
+        "line": (0.110, 0.175, 0.275, 1),
+    },
+    "Light": {
+        "background": (0.914, 0.941, 0.969, 1),
+        "surface": (1, 1, 1, 1),
+        "surface_alt": (0.855, 0.910, 0.957, 1),
+        "surface_pressed": (0.760, 0.850, 0.930, 1),
+        "accent": (0.030, 0.494, 0.686, 1),
+        "accent_pressed": (0.020, 0.390, 0.560, 1),
+        "cyan": (0.000, 0.550, 0.720, 1),
+        "danger": (0.820, 0.180, 0.240, 1),
+        "danger_pressed": (0.680, 0.110, 0.170, 1),
+        "success": (0.050, 0.590, 0.400, 1),
+        "text": (0.055, 0.120, 0.200, 1),
+        "muted": (0.300, 0.400, 0.500, 1),
+        "line": (0.650, 0.740, 0.830, 1),
+    },
+    "AMOLED": {
+        "background": (0, 0, 0, 1),
+        "surface": (0.030, 0.035, 0.045, 1),
+        "surface_alt": (0.070, 0.085, 0.110, 1),
+        "surface_pressed": (0.105, 0.135, 0.180, 1),
+        "accent": (0.000, 0.400, 0.950, 1),
+        "accent_pressed": (0.000, 0.300, 0.760, 1),
+        "cyan": (0.000, 0.900, 1.000, 1),
+        "danger": (0.930, 0.170, 0.270, 1),
+        "danger_pressed": (0.730, 0.100, 0.180, 1),
+        "success": (0.100, 0.900, 0.570, 1),
+        "text": (0.980, 0.990, 1, 1),
+        "muted": (0.550, 0.610, 0.690, 1),
+        "line": (0.130, 0.160, 0.210, 1),
+    },
+    "Neon Blue": {
+        "background": (0.012, 0.035, 0.090, 1),
+        "surface": (0.025, 0.085, 0.180, 1),
+        "surface_alt": (0.055, 0.125, 0.285, 1),
+        "surface_pressed": (0.080, 0.180, 0.390, 1),
+        "accent": (0.000, 0.380, 1.000, 1),
+        "accent_pressed": (0.000, 0.270, 0.800, 1),
+        "cyan": (0.345, 0.925, 1.000, 1),
+        "danger": (0.920, 0.170, 0.340, 1),
+        "danger_pressed": (0.720, 0.100, 0.250, 1),
+        "success": (0.160, 0.900, 0.640, 1),
+        "text": (0.940, 0.970, 1, 1),
+        "muted": (0.570, 0.700, 0.850, 1),
+        "line": (0.100, 0.270, 0.560, 1),
+    },
 }
+
+COLORS = dict(THEMES["Dark"])
+
+
+def apply_color_theme(name: str) -> None:
+    """Update the palette used when constructing mobile widgets."""
+
+    COLORS.clear()
+    COLORS.update(THEMES.get(name, THEMES["Dark"]))
 
 
 class Surface(BoxLayout):
@@ -54,6 +112,7 @@ class Surface(BoxLayout):
 
     def __init__(self, radius=18, **kwargs):
         self._radius = dp(radius)
+        kwargs.setdefault("background_color", COLORS["surface"])
         super().__init__(**kwargs)
         with self.canvas.before:
             self._canvas_color = Color(rgba=self.background_color)
@@ -83,6 +142,8 @@ class ProfessionalButton(Button):
 
     def __init__(self, radius=14, **kwargs):
         self._radius = dp(radius)
+        kwargs.setdefault("normal_color", COLORS["surface_alt"])
+        kwargs.setdefault("pressed_color", COLORS["surface_pressed"])
         kwargs.setdefault("background_normal", "")
         kwargs.setdefault("background_down", "")
         kwargs.setdefault("background_color", (0, 0, 0, 0))
@@ -161,53 +222,72 @@ class MobileCalculator(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(
             orientation="vertical",
-            spacing=dp(8),
-            padding=(dp(10), dp(8), dp(10), dp(6)),
+            spacing=dp(6),
+            padding=(dp(10), dp(6), dp(10), dp(5)),
             **kwargs,
         )
         self.settings_store = SettingsStore()
         self.settings = self.settings_store.load()
+        if self.settings.theme not in THEMES:
+            self.settings.theme = "Dark"
+        apply_color_theme(self.settings.theme)
+        from kivy.core.window import Window
+
+        Window.clearcolor = COLORS["background"]
         self.ans = 0.0
         self.history = HistoryManager()
         self.currency = CurrencyConverter()
         self.current_page = "Calculator"
-        self.nav_buttons: dict[str, ProfessionalButton] = {}
+        self.menu: DropDown | None = None
+        self.page_callbacks = {
+            "Calculator": self.show_calculator,
+            "Unit Converter": self.show_units,
+            "Statistics": self.show_stats,
+            "Currency Converter": self.show_currency,
+            "History": self.show_history,
+            "Themes": self.show_themes,
+            "Settings": self.show_settings,
+            "Precision Pro": self.show_pro,
+        }
 
+        self._build_shell()
+        self.show_calculator()
+
+    def _build_shell(self) -> None:
         self.expression = self._text_input(
             hint="Enter an expression",
-            font_size=sp(20),
-            height=dp(42),
+            font_size=sp(18),
+            height=dp(36),
             halign="right",
         )
         self.result = self._label(
             "0",
-            font_size=sp(34),
+            font_size=sp(31),
             color=COLORS["text"],
             halign="right",
-            height=dp(50),
+            height=dp(42),
         )
         self.status = self._label(
             "Ready",
             font_size=sp(11),
             color=COLORS["muted"],
             halign="right",
-            height=dp(20),
+            height=dp(18),
         )
 
         self.add_widget(self._build_header())
         self.content = BoxLayout(orientation="vertical")
         self.add_widget(self.content)
-        self.add_widget(self._build_navigation())
         self.add_widget(
             self._label(
-                "Designed by Hussain",
+                "Designed by Hussain Babar",
                 font_size=sp(10),
                 color=COLORS["muted"],
                 halign="center",
-                height=dp(18),
+                height=dp(19),
+                bold=True,
             )
         )
-        self.show_calculator()
 
     # ---------- Shared UI helpers ----------
 
@@ -216,12 +296,14 @@ class MobileCalculator(BoxLayout):
         text: str,
         *,
         font_size=sp(14),
-        color=COLORS["text"],
+        color=None,
         halign="left",
         valign="middle",
         height=None,
         bold=False,
     ) -> Label:
+        if color is None:
+            color = COLORS["text"]
         label = Label(
             text=text,
             font_size=font_size,
@@ -348,98 +430,177 @@ class MobileCalculator(BoxLayout):
         return scroll, body
 
     def _build_header(self) -> BoxLayout:
-        header = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(8))
+        header = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(6))
         title_block = BoxLayout(orientation="vertical", spacing=0)
         title_block.add_widget(
             self._label(
                 "PRECISION",
-                font_size=sp(11),
+                font_size=sp(10),
                 color=COLORS["cyan"],
-                height=dp(20),
+                height=dp(17),
                 bold=True,
             )
         )
-        title_block.add_widget(
-            self._label(
-                "Calculator",
-                font_size=sp(24),
-                color=COLORS["text"],
-                height=dp(32),
-                bold=True,
-            )
+        self.header_title = self._label(
+            "Calculator",
+            font_size=sp(21),
+            color=COLORS["text"],
+            height=dp(30),
+            bold=True,
         )
+        title_block.add_widget(self.header_title)
         header.add_widget(title_block)
-        badge = Surface(
-            orientation="vertical",
+
+        self.credit_button = ProfessionalButton(
+            text="",
             size_hint=(None, None),
-            size=(dp(88), dp(31)),
-            padding=(dp(8), 0),
-            radius=15,
-            background_color=COLORS["surface"],
+            size=(dp(88), dp(32)),
+            font_size=sp(9),
+            radius=16,
+            normal_color=COLORS["surface"],
+            pressed_color=COLORS["surface_pressed"],
+            color=COLORS["cyan"],
         )
-        badge.add_widget(
-            self._label(
-                "PRO EDITION",
-                font_size=sp(9),
-                color=COLORS["cyan"],
-                halign="center",
-                bold=True,
-            )
+        self.credit_button.bind(on_release=self.show_pro)
+        header.add_widget(self.credit_button)
+
+        menu_button = ProfessionalButton(
+            text="...",
+            size_hint=(None, None),
+            size=(dp(42), dp(32)),
+            font_size=sp(18),
+            radius=16,
+            normal_color=COLORS["surface"],
+            pressed_color=COLORS["surface_pressed"],
         )
-        header.add_widget(badge)
+        menu_button.bind(on_release=self.open_overflow_menu)
+        header.add_widget(menu_button)
+        self._update_credit_badge()
         return header
 
-    def _build_navigation(self) -> Surface:
-        nav = Surface(
-            orientation="horizontal",
-            size_hint_y=None,
-            height=dp(54),
-            padding=(dp(4), dp(4)),
-            radius=17,
-            background_color=COLORS["surface"],
-        )
-        items = (
-            ("Calculator", self.show_calculator),
-            ("Units", self.show_units),
-            ("Stats", self.show_stats),
-            ("Currency", self.show_currency),
-            ("History", self.show_history),
-            ("Settings", self.show_settings),
-        )
-        row = BoxLayout(spacing=dp(3))
-        for name, callback in items:
-            button = ProfessionalButton(
+    def open_overflow_menu(self, anchor):
+        if self.menu is not None:
+            self.menu.dismiss()
+        menu = DropDown(auto_width=False, width=dp(218))
+        for name, callback in self.page_callbacks.items():
+            button = Button(
                 text=name,
-                font_size=sp(9),
-                radius=13,
+                size_hint_y=None,
+                height=dp(46),
+                font_size=sp(13),
+                bold=name == self.current_page,
+                color=COLORS["cyan"] if name == self.current_page else COLORS["text"],
+                background_normal="",
+                background_down="",
+                background_color=(
+                    COLORS["surface_pressed"]
+                    if name == self.current_page
+                    else COLORS["surface"]
+                ),
             )
-            button.bind(on_release=lambda _, action=callback: action())
-            self.nav_buttons[name] = button
-            row.add_widget(button)
-        nav.add_widget(row)
-        return nav
+
+            def select_page(_, action=callback):
+                menu.dismiss()
+                action()
+
+            button.bind(on_release=select_page)
+            menu.add_widget(button)
+        self.menu = menu
+        menu.bind(on_dismiss=lambda *_: setattr(self, "menu", None))
+        menu.open(anchor)
 
     def _activate_page(self, page_name: str) -> None:
         self.current_page = page_name
-        for name, button in self.nav_buttons.items():
-            button.set_active(name == page_name)
+        if hasattr(self, "header_title"):
+            self.header_title.text = page_name
+        if self.menu is not None:
+            self.menu.dismiss()
+
+    def _update_credit_badge(self) -> None:
+        if not hasattr(self, "credit_button"):
+            return
+        if self.settings.is_pro:
+            self.credit_button.text = "PRO ACTIVE"
+            self.credit_button.normal_color = COLORS["success"]
+            self.credit_button.color = COLORS["text"]
+        else:
+            self.credit_button.text = f"{self.settings.credits_remaining} CREDITS"
+            self.credit_button.normal_color = COLORS["surface"]
+            self.credit_button.color = COLORS["cyan"]
+        self.credit_button.pressed_color = COLORS["surface_pressed"]
+
+    def _has_credit(self) -> bool:
+        if self.settings.is_pro or self.settings.credits_remaining > 0:
+            return True
+        self._show_credit_limit()
+        return False
+
+    def _consume_credit(self) -> None:
+        if self.settings.is_pro:
+            return
+        self.settings.credits_remaining = max(
+            0,
+            self.settings.credits_remaining - 1,
+        )
+        self.settings_store.save()
+        self._update_credit_badge()
+
+    def _show_credit_limit(self) -> None:
+        box = BoxLayout(
+            orientation="vertical",
+            spacing=dp(12),
+            padding=dp(14),
+        )
+        box.add_widget(
+            self._label(
+                "Your 100 free credits are finished.\nUpgrade to Pro for unlimited use.",
+                font_size=sp(14),
+                halign="center",
+            )
+        )
+        actions = BoxLayout(spacing=dp(8), size_hint_y=None, height=dp(46))
+        close = self._button("Close", height=dp(46))
+        upgrade = self._button(
+            "View Pro",
+            height=dp(46),
+            color=COLORS["accent"],
+            pressed=COLORS["accent_pressed"],
+        )
+        actions.add_widget(close)
+        actions.add_widget(upgrade)
+        box.add_widget(actions)
+        popup = Popup(
+            title="Credit limit reached",
+            content=box,
+            size_hint=(0.88, None),
+            height=dp(235),
+            auto_dismiss=False,
+        )
+        close.bind(on_release=popup.dismiss)
+
+        def open_pro(*_):
+            popup.dismiss()
+            self.show_pro()
+
+        upgrade.bind(on_release=open_pro)
+        popup.open()
 
     # ---------- Calculator ----------
 
     def show_calculator(self, *_):
         self._activate_page("Calculator")
         self.content.clear_widgets()
-        page = BoxLayout(orientation="vertical", spacing=dp(8))
+        page = BoxLayout(orientation="vertical", spacing=dp(6))
 
         display = Surface(
             orientation="vertical",
             size_hint_y=None,
-            height=dp(126),
-            padding=(dp(13), dp(7)),
+            height=dp(138),
+            padding=(dp(12), dp(8)),
             spacing=dp(1),
-            radius=18,
+            radius=16,
         )
-        display_top = BoxLayout(size_hint_y=None, height=dp(20))
+        display_top = BoxLayout(size_hint_y=None, height=dp(18))
         display_top.add_widget(
             self._label(
                 "EXPRESSION",
@@ -465,7 +626,7 @@ class MobileCalculator(BoxLayout):
         display.add_widget(self.status)
         page.add_widget(display)
 
-        keypad = GridLayout(cols=4, spacing=dp(5), padding=(0, 0, 0, dp(1)))
+        keypad = GridLayout(cols=4, spacing=dp(6), padding=(0, dp(1)))
         keys = (
             "AC", "DEL", "(", ")",
             "sin", "cos", "tan", "sqrt",
@@ -532,6 +693,9 @@ class MobileCalculator(BoxLayout):
             self.expression.text = self.expression.text[:-1]
         elif key == "=":
             try:
+                if not self._has_credit():
+                    self.status.text = "No credits remaining"
+                    return
                 mode = AngleMode(self.settings.angle_mode)
                 value = evaluate_expression(
                     self.expression.text,
@@ -545,7 +709,13 @@ class MobileCalculator(BoxLayout):
                     self.result.text,
                     self.settings.angle_mode,
                 )
-                self.status.text = "Calculation saved to history"
+                self._consume_credit()
+                if self.settings.is_pro:
+                    self.status.text = "Calculation saved to history"
+                else:
+                    self.status.text = (
+                        f"Saved to history | {self.settings.credits_remaining} credits left"
+                    )
             except (CalculatorError, ValueError) as exc:
                 self.result.text = "Error"
                 self.status.text = str(exc)
@@ -635,6 +805,9 @@ class MobileCalculator(BoxLayout):
 
     def convert_unit_value(self, category, value, source, target, output):
         try:
+            if not self._has_credit():
+                output.text = "No credits remaining"
+                return
             converted = convert_unit(
                 category.text,
                 float(value.text),
@@ -642,6 +815,7 @@ class MobileCalculator(BoxLayout):
                 target.text,
             )
             output.text = f"{format_number(converted)} {target.text}"
+            self._consume_credit()
         except (CalculatorError, ValueError):
             output.text = "Enter a valid value"
 
@@ -694,6 +868,9 @@ class MobileCalculator(BoxLayout):
 
     def analyze(self, values, output):
         try:
+            if not self._has_credit():
+                output.text = "No credits remaining"
+                return
             numbers = [
                 float(item.strip())
                 for item in values.text.split(",")
@@ -703,6 +880,7 @@ class MobileCalculator(BoxLayout):
             output.text = "\n".join(
                 f"{key.upper()}\n{value}" for key, value in summary.items()
             )
+            self._consume_credit()
         except (CalculatorError, ValueError) as exc:
             output.text = str(exc)
 
@@ -784,6 +962,9 @@ class MobileCalculator(BoxLayout):
 
     def convert_currency(self, amount, source, target, output):
         try:
+            if not self._has_credit():
+                output.text = "No credits remaining"
+                return
             converted = self.currency.convert(
                 float(amount.text),
                 source.text,
@@ -792,6 +973,7 @@ class MobileCalculator(BoxLayout):
             output.text = f"{converted:,.2f} {target.text}"
             self.settings.last_currency_from = source.text
             self.settings.last_currency_to = target.text
+            self._consume_credit()
             self.settings_store.save()
         except (CalculatorError, ValueError) as exc:
             output.text = str(exc)
@@ -900,6 +1082,82 @@ class MobileCalculator(BoxLayout):
         self.history.clear()
         self.show_history()
 
+    # ---------- Themes ----------
+
+    def show_themes(self, *_):
+        self._activate_page("Themes")
+        self.content.clear_widgets()
+        scroll, body = self._scroll_page()
+        body.add_widget(
+            self._page_title("Themes", "Choose a polished color style")
+        )
+
+        descriptions = {
+            "Dark": "Balanced navy theme for everyday use",
+            "Light": "Clean bright theme with strong contrast",
+            "AMOLED": "Pure black background for OLED displays",
+            "Neon Blue": "Vivid blue accents with a modern look",
+        }
+        for name in THEMES:
+            selected = name == self.settings.theme
+            card = Surface(
+                orientation="horizontal",
+                spacing=dp(10),
+                padding=(dp(13), dp(10)),
+                size_hint_y=None,
+                height=dp(74),
+                background_color=(
+                    COLORS["surface_pressed"] if selected else COLORS["surface"]
+                ),
+            )
+            text = BoxLayout(orientation="vertical", spacing=dp(1))
+            text.add_widget(
+                self._label(
+                    name,
+                    font_size=sp(16),
+                    height=dp(28),
+                    bold=True,
+                )
+            )
+            text.add_widget(
+                self._label(
+                    descriptions[name],
+                    font_size=sp(10),
+                    color=COLORS["muted"],
+                    height=dp(24),
+                )
+            )
+            card.add_widget(text)
+            choose = self._button(
+                "Active" if selected else "Apply",
+                height=dp(38),
+                color=COLORS["success"] if selected else COLORS["accent"],
+                pressed=COLORS["surface_pressed"],
+                font_size=sp(11),
+            )
+            choose.size_hint_x = None
+            choose.width = dp(72)
+            if not selected:
+                choose.bind(
+                    on_release=lambda _, theme_name=name: self.apply_theme(theme_name)
+                )
+            card.add_widget(choose)
+            body.add_widget(card)
+        self.content.add_widget(scroll)
+
+    def apply_theme(self, name: str) -> None:
+        if name not in THEMES:
+            return
+        self.settings.theme = name
+        self.settings_store.save()
+        apply_color_theme(name)
+        from kivy.core.window import Window
+
+        Window.clearcolor = COLORS["background"]
+        self.clear_widgets()
+        self._build_shell()
+        self.show_themes()
+
     # ---------- Settings ----------
 
     def show_settings(self, *_):
@@ -944,14 +1202,15 @@ class MobileCalculator(BoxLayout):
         body.add_widget(preferences)
 
         appearance = Surface(
-            orientation="vertical",
-            spacing=dp(5),
+            orientation="horizontal",
+            spacing=dp(10),
             padding=dp(14),
             size_hint_y=None,
-            height=dp(112),
+            height=dp(82),
             background_color=COLORS["surface_alt"],
         )
-        appearance.add_widget(
+        appearance_text = BoxLayout(orientation="vertical", spacing=dp(1))
+        appearance_text.add_widget(
             self._label(
                 "APPEARANCE",
                 font_size=sp(10),
@@ -960,22 +1219,25 @@ class MobileCalculator(BoxLayout):
                 bold=True,
             )
         )
-        appearance.add_widget(
+        appearance_text.add_widget(
             self._label(
-                "Professional Dark",
-                font_size=sp(18),
-                height=dp(30),
+                self.settings.theme,
+                font_size=sp(17),
+                height=dp(28),
                 bold=True,
             )
         )
-        appearance.add_widget(
-            self._label(
-                "Optimized for clarity, focus and comfortable night use.",
-                font_size=sp(11),
-                color=COLORS["muted"],
-                height=dp(30),
-            )
+        appearance.add_widget(appearance_text)
+        theme_button = self._button(
+            "Themes",
+            height=dp(40),
+            color=COLORS["accent"],
+            pressed=COLORS["accent_pressed"],
         )
+        theme_button.size_hint_x = None
+        theme_button.width = dp(90)
+        theme_button.bind(on_release=self.show_themes)
+        appearance.add_widget(theme_button)
         body.add_widget(appearance)
 
         about = Surface(
@@ -1013,7 +1275,7 @@ class MobileCalculator(BoxLayout):
         )
         about.add_widget(
             self._label(
-                "Designed by Hussain",
+                "Designed by Hussain Babar",
                 font_size=sp(12),
                 color=COLORS["cyan"],
                 height=dp(25),
@@ -1026,6 +1288,137 @@ class MobileCalculator(BoxLayout):
     def save_angle_setting(self, _, selected):
         self.settings.angle_mode = selected
         self.settings_store.save()
+
+    # ---------- Pro ----------
+
+    def show_pro(self, *_):
+        self._activate_page("Precision Pro")
+        self.content.clear_widgets()
+        scroll, body = self._scroll_page()
+        body.add_widget(
+            self._page_title("Precision Pro", "Unlimited access across every tool")
+        )
+
+        status_card = Surface(
+            orientation="vertical",
+            spacing=dp(4),
+            padding=dp(15),
+            size_hint_y=None,
+            height=dp(118),
+            background_color=COLORS["surface_alt"],
+        )
+        status_card.add_widget(
+            self._label(
+                "PRO ACTIVE" if self.settings.is_pro else "FREE PLAN",
+                font_size=sp(10),
+                color=COLORS["success"] if self.settings.is_pro else COLORS["cyan"],
+                height=dp(22),
+                bold=True,
+            )
+        )
+        status_card.add_widget(
+            self._label(
+                "Unlimited calculations"
+                if self.settings.is_pro
+                else f"{self.settings.credits_remaining} of 100 credits remaining",
+                font_size=sp(24),
+                height=dp(42),
+                bold=True,
+            )
+        )
+        status_card.add_widget(
+            self._label(
+                "One credit is used only after a successful result.",
+                font_size=sp(11),
+                color=COLORS["muted"],
+                height=dp(25),
+            )
+        )
+        body.add_widget(status_card)
+
+        benefits = Surface(
+            orientation="vertical",
+            spacing=dp(6),
+            padding=dp(15),
+            size_hint_y=None,
+            height=dp(190),
+        )
+        benefits.add_widget(
+            self._label(
+                "PRO BENEFITS",
+                font_size=sp(10),
+                color=COLORS["cyan"],
+                height=dp(22),
+                bold=True,
+            )
+        )
+        for line in (
+            "Unlimited scientific calculations",
+            "Unlimited currency and unit conversions",
+            "Unlimited statistics analysis",
+            "All premium themes",
+        ):
+            benefits.add_widget(
+                self._label(
+                    line,
+                    font_size=sp(14),
+                    height=dp(30),
+                )
+            )
+        body.add_widget(benefits)
+
+        if not self.settings.is_pro:
+            payment = self._button(
+                "EasyPaisa setup required",
+                height=dp(52),
+                color=COLORS["accent"],
+                pressed=COLORS["accent_pressed"],
+                font_size=sp(15),
+            )
+            payment.bind(on_release=self.show_payment_requirement)
+            body.add_widget(payment)
+            body.add_widget(
+                self._label(
+                    "Automatic activation needs a verified merchant checkout and secure server. A personal mobile number alone cannot verify purchases.",
+                    font_size=sp(11),
+                    color=COLORS["muted"],
+                    valign="top",
+                    height=dp(58),
+                )
+            )
+        self.content.add_widget(scroll)
+
+    def show_payment_requirement(self, *_):
+        box = BoxLayout(
+            orientation="vertical",
+            spacing=dp(10),
+            padding=dp(14),
+        )
+        box.add_widget(
+            self._label(
+                "Automatic EasyPaisa payment is not connected yet.\n\n"
+                "A verified merchant account, payment API and secure backend are required before real money can be accepted and Pro can be unlocked safely.",
+                font_size=sp(13),
+                halign="center",
+                valign="top",
+            )
+        )
+        close = self._button(
+            "Close",
+            height=dp(46),
+            color=COLORS["accent"],
+            pressed=COLORS["accent_pressed"],
+        )
+        box.add_widget(close)
+        popup = Popup(
+            title="Secure payment setup",
+            content=box,
+            size_hint=(0.90, None),
+            height=dp(300),
+            auto_dismiss=False,
+        )
+        close.bind(on_release=popup.dismiss)
+        popup.open()
 
 
 class PrecisionAndroidApp(App):
